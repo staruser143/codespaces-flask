@@ -4,6 +4,7 @@ import dash_table
 from dash.dependencies import Input, Output
 import pandas as pd
 import sqlite3
+import re
 
 # Sample data and SQLite setup
 def create_sample_db():
@@ -36,11 +37,15 @@ app.layout = html.Div([
         page_action='native',
         page_current=0,
         page_size=5
-    )
+    ),
+    html.Div(id='query-output')  # To display SQL query for debugging
 ])
 
 # Function to parse filter query
 def parse_filter_query(filter_query):
+    if not filter_query:
+        return {"filters": [], "logic": "AND"}
+    
     filter_query = filter_query.strip().lstrip('{').rstrip('}')
     conditions = re.split(r' (&| \|) ', filter_query)
     
@@ -107,11 +112,12 @@ def convert_dash_filter_to_sql(dash_filter, sort_by, table_name, page_current, p
 
 # Callback to fetch data from the database
 @app.callback(
-    Output('datatable', 'data'),
-    Input('datatable', 'filter_query'),
-    Input('datatable', 'sort_by'),
-    Input('datatable', 'page_current'),
-    Input('datatable', 'page_size')
+    [Output('datatable', 'data'),
+     Output('query-output', 'children')],  # Also output the query for debugging
+    [Input('datatable', 'filter_query'),
+     Input('datatable', 'sort_by'),
+     Input('datatable', 'page_current'),
+     Input('datatable', 'page_size')]
 )
 def update_table_data(filter_query, sort_by, page_current, page_size):
     table_name = "people"
@@ -121,7 +127,8 @@ def update_table_data(filter_query, sort_by, page_current, page_size):
     # Fetch data from the database
     conn = sqlite3.connect('example.db')
     df = pd.read_sql_query(sql_query, conn)
-    return df.to_dict('records')
+    
+    return df.to_dict('records'), f"SQL Query: {sql_query}"
 
 # Run the Dash app
 if __name__ == '__main__':
