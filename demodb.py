@@ -1,8 +1,8 @@
-import sqlite3
 import pandas as pd
+from sqlalchemy import create_engine
 
 # Create a connection to an in-memory SQLite database
-engine=create
+engine = create_engine('sqlite:///my_database.db')
 
 # Create a DataFrame with some data
 df = pd.DataFrame({

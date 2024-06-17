@@ -1,8 +1,10 @@
 import dash
-from dash import Dash, dcc, html, dash_table
+from dash import Dash, dcc, html, dash_table,  Input, Output, callback
 import pandas as pd
 from sqlalchemy import create_engine
 import re
+from dbutils import build_query, getPaginatedData
+
 
 # Create a connection to your database
 engine = create_engine('sqlite:///my_database.db')
@@ -16,31 +18,29 @@ app.layout = html.Div([
             {"name": i, "id": i} for i in pd.read_sql_query('SELECT * FROM my_table LIMIT 1', con=engine).columns
         ],
         page_current=0,
-        page_size=10,
+        page_size=3,
         page_action='custom',
         filter_action='custom'  # Enable filtering
     ),
 ])
 
-@app.callback(
-    dash.dependencies.Output('datatable-paging', 'data'),
-    [dash.dependencies.Input('datatable-paging', "page_current"),
-     dash.dependencies.Input('datatable-paging', "page_size"),
-     dash.dependencies.Input('datatable-paging', "filter_query")])  # Add filter_query to the inputs
-def update_table(page_current, page_size, filter_query):
-    print(f"filter_query1: {filter_query} ")
+@callback(
+    Output('datatable-paging', 'data'),
+    [Input('datatable-paging', "page_current"),
+     Input('datatable-paging', "page_size"),    
+     Input('datatable-paging', 'sort_by'),
+     Input('datatable-paging', "filter_query")])  
+def update_table(page_current, page_size, sort_by,filter_query):
+    print(f"page_current: {page_current}")
+    print(f"page_size: {page_size}")
+    print(f"sort_by: {sort_by}")
+    print(f"filter_query: {filter_query}")
+    print(f"filter_query type: {type(filter_query)}")
 
-    if filter_query:
-        filter_conditions = parse_filter_query(filter_query)
-        print(f"filter_query2: {filter_conditions} ")
-        query = 'SELECT * FROM my_table WHERE {}'.format(filter_conditions)
-    else:
-        query = 'SELECT * FROM my_table'
-    print(f"fquery: {query} ")
-    query += ' LIMIT {} OFFSET {}'.format(page_size, page_current * page_size)
-    print(f"final query: {query} ")
-    df = pd.read_sql_query(query, con=engine)
-    return df.to_dict('records')
+    query=build_query(filter_query,sort_by, page_current, page_size)
+    print(f"query: {query}")
+    df = getPaginatedData(query)
+    return df.to_dict("records")
 
 @app.callback(
     dash.dependencies.Output('datatable-paging', 'page_count'),
