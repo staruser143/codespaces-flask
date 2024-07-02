@@ -1,0 +1,4 @@
+Callback error updating ..permissions-table.data...permissions-data.data...table-dropdown.options...confirm-dialog.displayed.
+
+user_tables = permissions_df[permissions_df['user'] == selected_user]['tables'].tolist()
+KeyError: 'user'
