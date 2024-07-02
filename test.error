@@ -1,0 +1,2 @@
+ permissions_df = permissions_df.append({'user': selected_user, 'tables': table}, ignore_index=True)
+ AttributeError: 'DataFrame' object has no attribute 'append'
